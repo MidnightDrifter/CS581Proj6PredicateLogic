@@ -60,6 +60,7 @@ public:
 	// ..........
 	// ..........
 	////////////////////////////////////////////////////////////////////////
+	Clause() : literals() {}
 	Clause( Literal const& l) : literals() { literals.insert(l); }
 	//Change this to bool maybe?  idk
 	void Insert( Literal const& l) { literals.insert(l); }
@@ -150,6 +151,85 @@ public:
 	}
 	*/
 
+
+	std::pair<bool,Clause> CanResolve(const Clause& other) const
+	{
+		//Returns true & resolves clauses if possible
+		//False otherwise
+		Clause outClause;
+		Clause c1(*this);
+		Clause c2(other);
+		int complimentaryClauses = 0;
+		auto myIter = c1.literals.begin();
+		auto otherIter = c2.literals.begin();
+
+	//	auto myCurrPos = literals.begin();
+	//	auto otherCurrPos = other.literals.begin();
+
+		auto myCompIter = c1.literals.begin();
+		auto otherCompIter = c2.literals.begin();
+
+		while (myIter != c1.literals.end())
+		{
+			while (otherIter != c2.literals.end())
+			{
+				if ((*myIter) == ~(*otherIter))
+				{
+					complimentaryClauses++;
+					
+					if(complimentaryClauses>=2)
+					{
+						return std::make_pair(false,outClause);
+					}
+
+					myCompIter = myIter;
+					otherCompIter = otherIter;
+
+
+				}
+
+
+
+				if (otherIter != c2.literals.end())
+				{
+					otherIter++;
+				}
+			}
+
+			if(myIter != c1.literals.end())
+			{
+				myIter++;
+			}
+
+
+
+		}
+
+
+		//If we get out of the loops successfully, we know there's exactly ONE complimentary pair &
+		//we have the iterators that point to the values
+
+
+		c1.literals.erase(myCompIter);
+		c2.literals.erase(otherCompIter);
+
+		for (auto x = c1.literals.begin(); x != c1.literals.end(); x++)
+		{
+			outClause.Insert(*x);
+		}
+
+
+		for (auto x = c2.literals.begin(); x != c2.literals.end(); x++)
+		{
+			outClause.Insert(*x);
+		}
+
+		return std::make_pair(true, outClause);
+
+	}
+
+
+
 	friend std::ostream& operator<<(std::ostream& os, Clause const& clause) {
 		unsigned size = clause.literals.size();
 
@@ -182,8 +262,47 @@ public:
 	CNF( Clause const& c) : clauses() { clauses.insert(c); }
 	CNF( Literal const& l) : clauses() { clauses.insert(Clause(l)); }
 	CNF() : clauses() {}
+
 	
 	
+	std::pair<bool,CNF>  CanResolve(const CNF& other)
+	{
+		//Returns true if there exists exactly 1 complimentary pair, resolves on it
+		//False otherwise
+		CNF out;
+		bool outBool = false;
+		auto myClauseIter = clauses.begin();
+		auto otherClauseIter = other.clauses.begin();
+
+	//	int numClausesCount = 0;
+
+	//	auto complimentaryClauseIter1 = clauses.begin(); 
+	//	auto complimentaryClauseIter2 = other.clauses.begin();//	clauses.begin()
+	
+	
+		while (myClauseIter != clauses.end())
+		{
+			otherClauseIter = other.clauses.begin();
+			while (otherClauseIter != other.clauses.end())
+			{
+				auto t = myClauseIter->CanResolve(*otherClauseIter);
+				
+				if (t.first)
+				{
+					out.clauses.insert(t.second);
+					outBool = true;
+				}
+
+
+			}
+
+		}
+
+		return std::make_pair(outBool,out);
+
+	}
+
+
 	// not
 	CNF const operator~() const {   //Aren't all of these supposed to act on the current, given CNF?
 		//if CNF is made of a single clause: A | B | ~C,
