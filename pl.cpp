@@ -29,7 +29,7 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 	kb += ~alpha;
 
 
-	bool out = true;
+	//bool out = true;
 
 	//Push ~alpha into new kb
 
@@ -54,7 +54,12 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 
 
 
-	std::set<Clause> temp;
+
+
+	//ASSUMES THAT:
+	//If KB size doesn't change after we merge it with temp, then we'll have no solution
+
+	std::set<Clause> temp, temp2;
 
 //	auto kbFirstNegative = kb.begin();
 //	auto kbFirstPositive = kb.begin();
@@ -65,16 +70,141 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 	auto kbEndIter = kb.end();
 	auto kbIter2 = kb.begin();
 
-
+	//Initial pass over kb
 	while (kbIter != kbEndIter)
 	{
+		kbIter2 = kbIter;
+		if (kbIter->literals.empty())
+		{
+			return true;
+		}
 
+		while (kbIter2 != kbIter)
+		{
+			if (kbIter2->literals.empty())
+			{
+				return true;
+			}
+
+			auto testPair = kbIter->CanResolve(*kbIter2);
+			if (testPair.first)
+			{
+				if (testPair.second.literals.empty())
+				{
+					return true;
+				}
+
+
+				temp.insert(testPair.second);
+			}
+
+			if (kbIter2 != kbEndIter)
+			{
+				kbIter2++;
+			}
+		
+		
+		
+		}
+		
+		if (kbIter != kbEndIter)
+		{
+			kbIter++;
+		}
+
+	} 
+
+
+	int kbSize = kb.size();  //Keep track of starting vs. ending size--if they're the same, we've checked everything we can
+	bool keepGoing = true;
+
+	auto tempBaseIter = temp.begin();
+	auto tempPairIter = temp.begin();
+	auto tempEndIter = temp.end();
+	//kbIter = kb.begin();
+	//kbEndIter = kb.end();
+
+
+	
+	while (keepGoing)
+	{
+
+		kbIter = kb.begin();
+		kbEndIter = kb.end();
 		
 
+		while (tempBaseIter != tempEndIter)
+		{
+			while (kbIter != kbEndIter)
+			{
+				auto pair1 = tempBaseIter->CanResolve(*kbIter);
+				if (pair1.first)
+				{
+					if (pair1.second.literals.empty())
+					{
+						return true; 
+					}
+					
+					temp2.insert(pair1.second);
+				}
+				kbIter++;
+			}
 
+
+			tempPairIter = tempBaseIter;
+			tempPairIter++;
+			while (tempPairIter != tempEndIter)
+			{
+				//tempPairIter++;
+				
+				auto pair2 = tempBaseIter->CanResolve(*tempPairIter);
+				if (pair2.first)
+				{
+					if (pair2.second.literals.empty())
+					{
+						return true;
+					}
+					temp2.insert(pair2.second);
+				}
+
+
+			}
+
+			if (tempBaseIter != tempEndIter)
+			{
+				tempBaseIter++;
+			}
+			
+
+		}
+
+	
+	
+		//Insert all temp clauses into KB
+		for (auto x = temp.begin(); x != temp.end(); x++)
+		{
+			kb.clauses.insert(*x);
+		}
+
+		if (kbSize == kb.size())
+		{
+			//No change in size, return FALSE
+		//	return false;
+			keepGoing = false;
+		}
+
+		else {
+			kbSize = kb.size();
+			std::swap(temp, temp2);
+			temp2.clear();
+
+			tempBaseIter = temp.begin();
+			tempPairIter = temp.begin();
+			tempEndIter = temp.end();
+
+			}
 	}
-
-
+	return false;
 	//auto tempIter = temp.begin();
 //	auto tempEndIter = temp.end();
 //	auto tempIter2 = temp.begin();
@@ -95,18 +225,6 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 
 //			auto clauseIter1 = kbIter->literals.begin();
 //			auto clauseIter2 = kbIter2->literals.begin();
-
-			
-
-
-
-
-
-
-				
-
-
-
 
 
 
