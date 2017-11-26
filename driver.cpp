@@ -1,5 +1,6 @@
 #include "pl.h"
 #include <iostream>
+#include <time.h>
 
 #define xstr(s) str(s)
 #define str(s) #s

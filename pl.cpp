@@ -66,20 +66,40 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 	
 //	while(kbFirstPositive->)
 
+
+	if(kb.clauses.empty())
+	{
+		return true;
+	}
+
+
 	auto kbIter = kb.begin();
 	auto kbEndIter = kb.end();
 	auto kbIter2 = kb.begin();
+	auto kbBeforeEndIter = kb.begin();
+	if (kb.size() > 0)
+	{
+		kbBeforeEndIter = --kb.end();
+	}
+	else
+	{
+		kbBeforeEndIter = kb.end();
+	}
+
+
+
 
 	//Initial pass over kb
-	while (kbIter != kbEndIter)
+	while (kbIter != kbBeforeEndIter)
 	{
 		kbIter2 = kbIter;
+		kbIter2++;
 		if (kbIter->literals.empty())
 		{
 			return true;
 		}
 
-		while (kbIter2 != kbIter)
+		while (kbIter2 != kbEndIter)
 		{
 			if (kbIter2->literals.empty())
 			{
@@ -107,11 +127,11 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 		
 		}
 		
-		if (kbIter != kbEndIter)
+		if (kbIter != kbBeforeEndIter)
 		{
 			kbIter++;
 		}
-
+		
 	} 
 
 
@@ -121,6 +141,9 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 	auto tempBaseIter = temp.begin();
 	auto tempPairIter = temp.begin();
 	auto tempEndIter = temp.end();
+	auto tempBeforeEndIter = temp.end();
+	if(temp.size() >0)
+	{ tempBeforeEndIter--; }
 	//kbIter = kb.begin();
 	//kbEndIter = kb.end();
 
@@ -133,7 +156,7 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 		kbEndIter = kb.end();
 		
 
-		while (tempBaseIter != tempEndIter)
+		while (tempBaseIter != tempBeforeEndIter)
 		{
 			while (kbIter != kbEndIter)
 			{
@@ -167,10 +190,10 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 					temp2.insert(pair2.second);
 				}
 
-
+				tempPairIter++;
 			}
 
-			if (tempBaseIter != tempEndIter)
+			if (tempBaseIter != tempBeforeEndIter)
 			{
 				tempBaseIter++;
 			}
@@ -201,6 +224,12 @@ bool KnowledgeBase::ProveByRefutation( CNF const& alpha ) const {
 			tempBaseIter = temp.begin();
 			tempPairIter = temp.begin();
 			tempEndIter = temp.end();
+			if(temp.size()>0)
+			{tempBeforeEndIter = --temp.end(); }
+			else
+			{
+				tempBeforeEndIter = tempEndIter;
+			}
 
 			}
 	}

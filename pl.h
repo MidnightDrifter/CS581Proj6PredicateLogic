@@ -14,7 +14,7 @@ class Literal {
         Literal( std::string const& _name ) : name(_name), negated(false) { }
         Literal( ) : name(""), negated(false) { } // just for map.operator[]
         ////////////////////////////////////////////////////////////////////////
-        Literal& Negate() { negated=!negated; }
+		Literal& Negate() { negated = !negated;  return *this; }
         bool IsPositive() const { return !negated; }
         ////////////////////////////////////////////////////////////////////////
         bool operator==( Literal const& op2 ) const {
@@ -68,12 +68,12 @@ public:
 	{
 		//for(auto myIt = literals.begin())
 
-		if (*(literals.end()) < (*(other.literals.begin() )))
+		if (*(--literals.end()) < (*(other.literals.begin() )))
 		{
 			return true;
 		}
 
-		else if(*(other.literals.end()) < (*(literals.begin())))
+		else if(*(--other.literals.end()) < (*(literals.begin())))
 		{
 			return false;
 		}
@@ -87,16 +87,16 @@ public:
 				auto otherIter = other.literals.begin();
 				for (int i = 0; i < iterOffset; i++)
 				{
-					if (otherIter != other.literals.end())
+					if (otherIter != (--other.literals.end()))
 					{
 						otherIter++;// iterOffset;
 					}
 					else {
-						otherIter = other.literals.end();
+						otherIter = --other.literals.end();
 						i = iterOffset;
 					}
 				}
-
+				
 
 				//Thing at position iterOffset in THIS clause is strictly less than thing at position iterOffset in OTHER clause
 				if (*myIter < *otherIter)
@@ -105,7 +105,7 @@ public:
 				}
 
 				//Thing at position iterOffset in OTHER clause is strictly less than thing at position iterOffset in THIS clause
-				else if (*myIter < *otherIter)
+				else if (*otherIter < *myIter)
 				{
 					return false;
 				}
@@ -260,7 +260,7 @@ public:
 	////////////////////////////////////////////////////////////////////////
 	
 	CNF( Clause const& c) : clauses() { clauses.insert(c); }
-	CNF( Literal const& l) : clauses() { clauses.insert(Clause(l)); }
+	CNF( Literal const& l) : clauses() { clauses.emplace((l)); }
 	CNF() : clauses() {}
 
 	
@@ -312,7 +312,7 @@ public:
 		//~CNF = ~clause1 | ~clause2 | ~clause3 
 		//"or" is defined later 
 
-		CNF & op1 = CNF(*this);  //Add or remove const from this?   
+		CNF op1;// = CNF(*this);  //Add or remove const from this?   
 
 		if (0==clauses.size())  //SOMETHING HAS GONE HORRIBLY HORRIBLY WRONG
 		{
@@ -322,14 +322,15 @@ public:
 
 		else if (clauses.size() == 1)  //
 		{
-			auto myLiterals = op1.clauses.begin();
+			auto myLiterals = clauses.begin();
+			Clause c;
 			for (auto literalsIter = myLiterals->literals.begin(); literalsIter != myLiterals->literals.end(); literalsIter++)
 			{
 			//	Literal l(*literalsIter);
 			//	Clause c(~(l));
 			//	Clause c(~(*literalsIter));
 			//	clauses.insert(c);
-
+			//	c.Insert(~(*literalsIter));
 
 			//	clauses.insert(const_cast<Clause&>(Clause(~(*literalsIter))));
 				op1.clauses.emplace(~(*literalsIter));
@@ -341,6 +342,7 @@ public:
 			
 			
 			}
+			//return CNF(c);
 			return op1;
 		}
 
@@ -352,7 +354,7 @@ public:
 			auto opClauses = clauses.begin();
 			CNF out(~ CNF(*opClauses));
 			opClauses++;
-			for ( ;opClauses != op1.clauses.end(); opClauses++)
+			for ( ;opClauses != clauses.end(); opClauses++)
 			{
 				out = out | (~ CNF(*opClauses));
 			}
@@ -415,15 +417,23 @@ public:
 				//out.clauses.emplace((*thisIter) | (*otherIter));
 
 				
-				for (auto thisClauseIter = (*thisIter).literals.begin(); thisClauseIter != (*thisIter).literals.end(); thisClauseIter++)
-					{
+				
+
+					Clause temp(*thisIter);
+
+
 						for (auto otherClauseIter = (*otherIter).literals.begin(); otherClauseIter != (*otherIter).literals.end(); otherClauseIter++)
 							{
-								out.clauses.emplace((*thisClauseIter) | (*otherClauseIter));
+								//out.clauses.emplace((*thisClauseIter) | (*otherClauseIter));
+							
+						
+						//	Clause temp(*thisClauseIter);
+							temp.Insert(*otherClauseIter);
+						
 							}
 
-					}
-
+					
+						out.clauses.insert(temp);
 					
 
 				}
